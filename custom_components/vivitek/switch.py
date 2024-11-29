@@ -1,53 +1,57 @@
 import logging
-import socket
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
+import socket
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_PORT = 7000
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
-    """Set up Vivitek projector switch from a config entry."""
-    ip_address = entry.data["ip_address"]
-    friendly_name = entry.data["friendly_name"]
-    device_id = entry.entry_id
-
-    async_add_entities([VivitekProjectorSwitch(ip_address, friendly_name, device_id)], True)
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
+    """Set up Vivitek switch from a config entry."""
+    host = config_entry.data["host"]
+    name = config_entry.data["name"]
+    async_add_entities([VivitekSwitch(name, host)])
 
 
-class VivitekProjectorSwitch(SwitchEntity):
+class VivitekSwitch(SwitchEntity):
     """Representation of a Vivitek projector switch."""
 
-    def __init__(self, ip_address, friendly_name, device_id):
+    def __init__(self, name, host):
         """Initialize the switch."""
-        self._ip_address = ip_address
-        self._name = friendly_name
+        self._device_name = name
+        self._host = host
+        self._name = f'{name}_power'
         self._is_on = False
-        self._device_id = device_id
+        self._attr_unique_id = f"{host}_light"
+
 
     @property
     def name(self):
         """Return the name of the switch."""
         return self._name
 
+
     @property
     def is_on(self):
-        """Return the switch state."""
+        """Return true if the switch is on."""
         return self._is_on
 
     @property
     def device_info(self):
         """Return device information for this projector."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._device_id)},
-            name=self._name,
-            manufacturer="Vivitek",
-            model="Unknown Model",
-            sw_version="1.0",
-        )
+        return {
+            "identifiers": {(DOMAIN, self._host)},
+            "name": self._device_name,
+            "manufacturer": "Vivitek",
+            "model": "D4000Z",
+            "sw_version": '1'
+
+        }
+
+
 
     async def async_turn_on(self, **kwargs):
         """Turn the projector on."""
@@ -77,7 +81,7 @@ class VivitekProjectorSwitch(SwitchEntity):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(5)  # Timeout for socket
-                s.connect((self._ip_address, DEFAULT_PORT))
+                s.connect((self._host, DEFAULT_PORT))
                 s.sendall((command + '\r').encode())
                 _LOGGER.info("Sent command '%s' to projector '%s'", command, self._name)
                 response = s.recv(1024)

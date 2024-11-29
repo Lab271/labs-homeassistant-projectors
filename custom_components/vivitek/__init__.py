@@ -1,22 +1,27 @@
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN
+import homeassistant.helpers.config_validation as cv
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from typing import Any
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Vivitek integration from YAML."""
-    hass.data.setdefault(DOMAIN, {})
-    return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up the Vivitek integration from a config entry."""
-    hass.data[DOMAIN][entry.entry_id] = entry.data
+    """Set up Space Lights from a config entry."""
+    name = entry.data["name"]
+    host = entry.data["host"]
 
-    # Forward entry setup to the switch platform
-    await hass.config_entries.async_forward_entry_setup(entry, "switch")
+    # Store data in hass
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][entry.entry_id] = {"name": name, "host": host}
+
+    # Forward entry setups for platforms (light and number)
+    await hass.config_entries.async_forward_entry_setups(entry, ["switch"])
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    await hass.config_entries.async_forward_entry_unload(entry, "switch")
+    await hass.config_entries.async_unload_platforms(entry, ["switch"])
     hass.data[DOMAIN].pop(entry.entry_id)
     return True
