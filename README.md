@@ -40,6 +40,10 @@ Vivitek D4000Z projectors on the Lab271 AV network. Hosts are configured per-ins
 - Network reachability from the HA host to each projector on TCP/7000.
 - No external secrets or API tokens.
 
+## Naming
+
+Projector hostnames follow the [Lab271 naming convention](https://github.com/Lab271/labs-infra-overview/blob/main/naming.md): the `prj` class with 2-digit zero-padded numbering, e.g. `sbplabprj01`. Applies to Vivitek today and any future projector vendor this integration grows to support.
+
 ## Owner
 
 [`@LAB271`](.github/CODEOWNERS).
