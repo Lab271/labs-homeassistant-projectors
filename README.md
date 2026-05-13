@@ -4,7 +4,7 @@ Home Assistant custom integration for controlling networked projectors. Runs on 
 
 ## Status
 
-WIP. Vivitek (D4000Z) is the only vendor wired up today; the integration layout is intended to grow to additional projector vendors.
+WIP. Vivitek is the only vendor wired up today (tested against the DU4371Z-ST; the same TCP control protocol covers the broader Vivitek DU/D series). The integration layout is intended to grow to additional projector vendors.
 
 ## Rename history
 
@@ -32,7 +32,7 @@ Install via HACS as a custom repository, or copy `custom_components/vivitek/` in
 
 ## Inventory / targets
 
-Vivitek D4000Z projectors on the Lab271 AV network. Hosts are configured per-instance via the HA UI.
+Vivitek projectors on the Lab271 AV network (currently a DU4371Z-ST). Hosts are configured per-instance via the HA UI.
 
 ## Dependencies
 

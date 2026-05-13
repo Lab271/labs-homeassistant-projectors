@@ -25,7 +25,7 @@ class VivitekSwitch(SwitchEntity):
         self._host = host
         self._name = f'{name}_power'
         self._is_on = False
-        self._attr_unique_id = f"{host}_light"
+        self._attr_unique_id = f"{host}_power"
 
 
     @property
@@ -46,9 +46,6 @@ class VivitekSwitch(SwitchEntity):
             "identifiers": {(DOMAIN, self._host)},
             "name": self._device_name,
             "manufacturer": "Vivitek",
-            "model": "D4000Z",
-            "sw_version": '1'
-
         }
 
 
@@ -70,10 +67,9 @@ class VivitekSwitch(SwitchEntity):
     async def async_update(self):
         """Fetch the projector's status."""
         response = await self.hass.async_add_executor_job(self._send_command, 'op status ?')
-        if response and response.strip()[-1] == '2':  # Adjust based on actual response format
-            self._is_on = True
-        else:
-            self._is_on = False
+        # Vivitek returns ASCII like "Power = 1" (on) or "Power = 0" (off).
+        # Some models use 2/3 for warming/cooling — treat anything except "1" as off.
+        self._is_on = bool(response and response.strip().endswith('1'))
         self.async_write_ha_state()
 
     def _send_command(self, command):

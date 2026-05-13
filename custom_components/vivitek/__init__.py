@@ -7,7 +7,7 @@ from typing import Any
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Space Lights from a config entry."""
+    """Set up Vivitek Projector from a config entry."""
     name = entry.data["name"]
     host = entry.data["host"]
 

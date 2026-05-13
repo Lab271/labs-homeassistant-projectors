@@ -3,8 +3,8 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME
 from .const import DOMAIN
 
-class SpaceLightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Space Lights."""
+class VivitekConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Vivitek Projector."""
 
     VERSION = 1
 
