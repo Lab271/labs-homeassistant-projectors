@@ -1,77 +1,41 @@
-import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
-from .const import DOMAIN
-import socket
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-_LOGGER = logging.getLogger(__name__)
-DEFAULT_PORT = 7000
+from .const import DOMAIN
+from .entity import build_device_info
+
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
     """Set up Vivitek switch from a config entry."""
-    host = config_entry.data["host"]
-    name = config_entry.data["name"]
-    async_add_entities([VivitekSwitch(name, host)])
+    data = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities([VivitekSwitch(data)])
 
 
-class VivitekSwitch(SwitchEntity):
-    """Representation of a Vivitek projector switch."""
+class VivitekSwitch(CoordinatorEntity, SwitchEntity):
+    """Representation of a Vivitek projector power switch."""
 
     _attr_has_entity_name = True
     _attr_name = "Power"
 
-    def __init__(self, name, host):
+    def __init__(self, data):
         """Initialize the switch."""
-        self._host = host
-        self._is_on = False
-        self._attr_unique_id = f"{host}_power"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, host)},
-            name=name,
-            manufacturer="Vivitek",
-        )
+        super().__init__(data["coordinator"])
+        self._attr_unique_id = f"{data['host']}_power"
+        self._attr_device_info = build_device_info(data)
 
     @property
     def is_on(self):
-        """Return true if the switch is on."""
-        return self._is_on
-
-
+        """Return true if the projector is on."""
+        return bool(self.coordinator.data.get("power"))
 
     async def async_turn_on(self, **kwargs):
         """Turn the projector on."""
-        response = await self.hass.async_add_executor_job(self._send_command, 'op power.on')
-        if response:
-            self._is_on = True
-            self.async_write_ha_state()
+        await self.hass.async_add_executor_job(self.coordinator.send_command, "op power.on")
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):
         """Turn the projector off."""
-        response = await self.hass.async_add_executor_job(self._send_command, 'op power.off')
-        if response:
-            self._is_on = False
-            self.async_write_ha_state()
-
-    async def async_update(self):
-        """Fetch the projector's status."""
-        response = await self.hass.async_add_executor_job(self._send_command, 'op status ?')
-        # Vivitek returns ASCII like "Power = 1" (on) or "Power = 0" (off).
-        # Some models use 2/3 for warming/cooling — treat anything except "1" as off.
-        self._is_on = bool(response and response.strip().endswith('1'))
-        self.async_write_ha_state()
-
-    def _send_command(self, command):
-        """Send a command to the projector."""
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(5)  # Timeout for socket
-                s.connect((self._host, DEFAULT_PORT))
-                s.sendall((command + '\r').encode())
-                _LOGGER.info("Sent command '%s' to projector at %s", command, self._host)
-                response = s.recv(1024)
-                return response.decode().strip()
-        except Exception as e:
-            _LOGGER.error("Error communicating with projector at %s: %s", self._host, e)
-        return None
+        await self.hass.async_add_executor_job(self.coordinator.send_command, "op power.off")
+        await self.coordinator.async_request_refresh()
