@@ -39,6 +39,16 @@ QUERIES = {
     "source_info": "op source.info ?",
     "light_mode": "op light.mode ?",
     "runtime_hours": "op proj.runtime ?",
+    "input": "op input.sel ?",
+}
+
+# Input source codes reported/accepted by "op input.sel" (verified against the
+# DU4371Z-ST; matches the DU7195Z laser communication manual).
+INPUT_SOURCES = {
+    1: "VGA1",
+    6: "HDMI 1",
+    9: "HDMI 2",
+    15: "HDBaseT",
 }
 
 
@@ -99,6 +109,12 @@ class VivitekCoordinator(DataUpdateCoordinator):
         if key in ("light_mode", "runtime_hours"):
             try:
                 return int(value)
+            except ValueError:
+                return None
+        if key == "input":
+            # Map the numeric code to a source name; unknown codes -> None.
+            try:
+                return INPUT_SOURCES.get(int(value))
             except ValueError:
                 return None
         if key == "source_info":
