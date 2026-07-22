@@ -47,3 +47,7 @@ Projector hostnames follow the [Lab271 naming convention](https://github.com/Lab
 ## Owner
 
 [`@LAB271`](.github/CODEOWNERS).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE). Copyright © 2024-2026 Schuberg Philis / Lab271. See [NOTICE](NOTICE).
