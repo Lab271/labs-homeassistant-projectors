@@ -27,29 +27,10 @@ DEFAULT_PORT = 7000
 SOCKET_TIMEOUT = 6
 UPDATE_INTERVAL = timedelta(seconds=30)
 
-ILLEGAL = "*Illegal format#"
-# Values the projector reports when a reading is not yet available.
-UNAVAILABLE_VALUES = {"", "NA"}
-
-# Query commands -> key used in the coordinator's data dict.
-# "op proj.runtime ?" is the only usage-hours counter this firmware exposes
-# (lamp1.hours / light.hour etc. all return *Illegal format# on the DU4371Z-ST).
-QUERIES = {
-    "power": "op status ?",
-    "source_info": "op source.info ?",
-    "light_mode": "op light.mode ?",
-    "runtime_hours": "op proj.runtime ?",
-    "input": "op input.sel ?",
-}
-
-# Input source codes reported/accepted by "op input.sel" (verified against the
-# DU4371Z-ST; matches the DU7195Z laser communication manual).
-INPUT_SOURCES = {
-    1: "VGA1",
-    6: "HDMI 1",
-    9: "HDMI 2",
-    15: "HDBaseT",
-}
+# Protocol constants and reply parsing live in protocol.py so they can be
+# unit-tested without Home Assistant. INPUT_SOURCES is re-exported here because
+# select.py imports it from this module.
+from .protocol import INPUT_SOURCES, QUERIES, parse_reply  # noqa: E402,F401
 
 
 class VivitekCoordinator(DataUpdateCoordinator):
@@ -81,51 +62,17 @@ class VivitekCoordinator(DataUpdateCoordinator):
         if power_raw is None:
             raise UpdateFailed(f"No response from projector at {self._host}")
 
-        data = {"power": self._parse("power", power_raw)}
+        data = {"power": parse_reply("power", power_raw)}
         for key, command in QUERIES.items():
             if key == "power":
                 continue
-            data[key] = self._parse(key, self._send_command(command))
+            data[key] = parse_reply(key, self._send_command(command))
         return data
-
-    @staticmethod
-    def _parse(key, raw):
-        """Turn a raw ASCII reply into a usable value.
-
-        Replies look like "OP STATUS = 2" or "OP SOURCE.INFO = 1920 x 1200 ...".
-        During power transitions the projector may return "NA" (not yet
-        available), the padded "*Illegal format#", or a stray framing byte with
-        no "=" — all of which become None here.
-        """
-        if not raw or raw == ILLEGAL or "=" not in raw:
-            return None
-        value = raw.split("=", 1)[-1].strip()
-        if value in UNAVAILABLE_VALUES:
-            return None
-        if key == "power":
-            # Observed states: 0 = off/standby; 2 = on; 4/5 = warming.
-            # Any non-zero numeric state means the projector is powered on.
-            return value.isdigit() and value != "0"
-        if key in ("light_mode", "runtime_hours"):
-            try:
-                return int(value)
-            except ValueError:
-                return None
-        if key == "input":
-            # Map the numeric code to a source name; unknown codes -> None.
-            try:
-                return INPUT_SOURCES.get(int(value))
-            except ValueError:
-                return None
-        if key == "source_info":
-            # Collapse the projector's padded spacing: "1920  x  1200  @  59.94 Hz".
-            return " ".join(value.split())
-        return value
 
     def async_read_device_info(self):
         """Read model and firmware once. Best-effort; runs in the executor."""
-        model = self._parse("model", self._send_command("op model ?"))
-        sw_version = self._parse("sw_version", self._send_command("op sw.ver ?"))
+        model = parse_reply("model", self._send_command("op model ?"))
+        sw_version = parse_reply("sw_version", self._send_command("op sw.ver ?"))
         return {"model": model, "sw_version": sw_version}
 
     def send_command(self, command):
