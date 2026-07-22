@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024-2026 Schuberg Philis / Lab271
 """Pure helpers for the Vivitek "op" ASCII control protocol.
 
 This module is deliberately free of Home Assistant (and any network) imports

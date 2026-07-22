@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024-2026 Schuberg Philis / Lab271
 """Unit tests for the Vivitek reply parser.
 
 protocol.py is loaded directly from its file so these tests run without

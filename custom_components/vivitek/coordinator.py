@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024-2026 Schuberg Philis / Lab271
 """Shared polling coordinator for a Vivitek projector.
 
 The projector speaks a simple ASCII "op" protocol over TCP and only accepts
