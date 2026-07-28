@@ -46,7 +46,7 @@ Projector hostnames follow the [Lab271 naming convention](https://github.com/Lab
 
 ## Owner
 
-[`@LAB271`](.github/CODEOWNERS).
+[@LAB271](https://github.com/orgs/Lab271/people).
 
 ## License
 
